@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>角色管理</title>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../plugins/jqPaginator.min.js" type="text/javascript"></script>
+
+    <!--下拉框-->
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap-select.min.css">
+    <script src="../plugins/bootstrap/js/bootstrap-select.min.js"></script>
+
+	<script>
+        $(function () {
+            list(1,true);
+        })
+
+        //点击修改时候，模态框的初始数据
+        function showAddRow(roleId) {
+            $("#select").html("");
+            addSelectData();
+            $("#roleId").val(roleId);
+        }
+
+        //当点击新增权限时，select选择框的数据的更新
+        function addSelectData() {
+            $.post("permission/queryAll",{},function (result) {
+                console.log(result.list);
+                for (var i=1;i<=result.list.length;i++){
+                    //当权限与被分享员工当前权限相等时，不将该项加入select.
+                    // if (pName == result.list[i-1].pName){
+                    //     alert("我是相等的")
+                    //     continue;
+                    // }
+                    $("#select").append("<option value="+result.list[i-1].pId+">"+result.list[i-1].pName+"</option>")
+                    $('#select').selectpicker('refresh');
+                    $('#select').selectpicker('render');
+                }
+            })
+        }
+
+        var page = {pageNum:1,size:4,rowCount:0,pageCount:0};
+        function list(pageNum,isFirst) {
+            page.pageNum=pageNum;
+            $.get("permission/findAll",page,function (result) {
+                var permissionList = result.permissionList;
+                page.rowCount = result.rowCount;
+                page.pageCount = result.pageCount
+                $("#showPermissionList").html("");
+                $.each(permissionList,function (i,e) {
+                    $("#showPermissionList").append("<tr> <td>"+e.roleId+"</td> <td>"+e.pId+"</td> <td>"+e.pName+"</td> <td>"+e.pInfo+
+                        "</td> <td class='text-center'>"+
+                        "<button type='button' class='btn bg-olive btn-xs' data-toggle='modal' data-target='#addModal' onclick='showAddRow(" +e.roleId+ ")' >修改</button>"+
+                        "<button type='button' class='btn bg-olive btn-xs' onclick='deletePermission(" +e.roleId+ "," +e.pId+ ")' > 删除</button>"+ "</td> </tr>");
+                })
+                //第一次显示分页插件，后面只需要更新数据
+                if(isFirst)
+                {
+                    $("#page").jqPaginator({
+                        pageSize:4,//每一页多少条记录
+                        totalCounts:page.rowCount,
+                        visiblePages: 10,
+                        currentPage: page.pageNum,
+
+
+                        first: '<li class="first"><a href="javascript:void(0);">首页</a></li>',
+                        prev: '<li class="prev"><a href="javascript:void(0);">上一页</a></li>',
+                        next: '<li class="next"><a href="javascript:void(0);">下一页</a></li>',
+                        last: '<li class="last"><a href="javascript:void(0);">尾页</a></li>',
+                        page: '<li class="page"><a href="javascript:void(0);">{{page}}</a></li>',
+                        onPageChange: function (pageNo) {
+                            console.log(pageNo);
+                            //更新数据
+                            list(pageNo,false);
+                        }
+                    });
+                }
+            },"json")
+        }
+        //给某个角色某一权限
+        function addPermission() {
+            var rolePermission = {roleId:$("#roleId"),pId:$("#select option:selected").val()}
+            $.post("rolePermission/save",rolePermission,function () {
+            },"json")
+            list(1,true);
+        }
+        //删除某个角色的某一权限
+        function deletePermission(roleId,pId) {
+            var rolePermission = {roleId:roleId,pId:pId};
+            $.post("rolePermission/delete",rolePermission,function () {
+            },"json")
+            list(1,true);
+        }
+
+	</script>
+
+</head>
+<body class="hold-transition skin-red sidebar-mini">
+<!-- .box-body -->
+<div class="box-header with-border">
+    <h3 class="box-title">角色权限管理</h3>
+</div>
+<div class="box-body">
+
+    <!-- 数据表格 -->
+    <div class="table-box">
+
+        <!--工具栏-->
+        <div class="pull-left">
+            <div class="form-group form-inline">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" title="重置" ><i class="fa fa-file-o"></i> 重置</button>
+                </div>
+            </div>
+        </div>
+        <div class="box-tools pull-right">
+            <div class="has-feedback">
+            </div>
+        </div>
+        <!--工具栏/-->
+
+        <!--数据列表-->
+        <table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+            <thead>
+            <tr>
+
+                <th class="sorting_asc">角色ID</th>
+                <th class="sorting">权限id</th>
+                <th class="sorting">权限名称</th>
+                <th class="sorting">权限信息</th>
+                <th class="text-center">操作</th>
+            </tr>
+            </thead>
+            <tbody id="showPermissionList">
+            </tbody>
+        </table>
+        <!--数据列表/-->
+    </div>
+    <!-- 数据表格 /-->
+</div>
+<!-- /.box-body -->
+
+<!-- 新增窗口 -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-action="admin/employee/save">
+    <div class="modal-dialog" >
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h3 id="myAddModalLabel">新增权限</h3>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered table-striped"  width="800px" >
+                    <tr>
+                        <td>角色ID</td>
+                        <td><input id="roleId" class="form-control" placeholder="角色ID" readonly="readonly">  </td>
+                    </tr>
+                    <tr>
+                        <td>添加权限</td>
+                        <td>
+                            <select id="select" class="selectpicker" >
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="addPermission()">保存</button>
+                <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+<ul class="pagination" id="page"></ul>
+
+</body>
+</html>

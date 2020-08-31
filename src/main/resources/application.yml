@@ -1,0 +1,17 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /springboot-0828
+
+
+spring:
+  application:
+    name: springboot-0828
+
+#
+#data:
+#  str: Rose
+#  num: 2020
+#  bool: true
+#  list: [4,5,6]
+#  employee: {empid: 100, empName= "黄家驹"}

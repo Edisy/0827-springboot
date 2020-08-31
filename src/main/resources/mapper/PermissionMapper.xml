@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dao.PermissionDao" >
+    <select id="getPsByRoleId" parameterType="int" resultType="permission">
+        select roleId, p.*  from permission p, rolepermission rp  where p.pId=rp.pId and  roleId=#{roleId}
+    </select>
+
+    <select id="findAll" resultType="permission">
+        select roleId, p.pId,p.pName,p.pInfo  from permission p, rolepermission rp  where p.pId=rp.pId
+    </select>
+
+    <select id="queryAll" resultType="permission">
+        select * from permission
+    </select>
+
+</mapper>

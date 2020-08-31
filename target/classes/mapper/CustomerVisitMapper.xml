@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.CustomerVisitDao">
+    <resultMap id="CustomerVisitMap" type="CustomerVisit">
+        <id property="id" column="id"></id>
+        <result property="content" column="content"></result>
+        <result property="date" column="date"></result>
+        <collection property="customers" ofType="Customer">
+            <id property="cusId" column="cusId"></id>
+            <result property="cusName" column="cusName"></result>
+        </collection>
+        <collection property="employees" ofType="Employee">
+            <id property="empId" column="empId"></id>
+            <result property="empName" column="empName"></result>
+        </collection>
+    </resultMap>
+    <select id="findAll" resultMap="CustomerVisitMap">
+        SELECT id, c.cusId, c.cusName, e.empId, e.empName, content, date FROM customervisit cv, customer c, employees e WHERE cv.cusId = c.cusId AND cv.empId = e.empId
+    </select>
+    <select id="findSelfAndShare" parameterType="customerVisit" resultMap="CustomerVisitMap">
+        SELECT id, c.cusId, c.cusName, e.empId, e.empName, content, date FROM customervisit cv, customer c, employees e WHERE ( cv.cusId = c.cusId AND cv.empId = e.empId AND e.empId = #{empId} ) OR ( c.cusId IN ( SELECT cusId FROM customershare WHERE empId = #{empId} ) AND cv.cusId = c.cusId AND cv.empId = e.empId )
+    </select>
+
+    <insert id="insert" parameterType="customerVisit">
+        insert into customervisit(cusId,empId,content,date) values(#{cusId},#{empId},#{content},#{date})
+    </insert>
+    <delete id="delete" parameterType="int">
+        delete from customervisit where id=#{id}
+    </delete>
+    <select id="findById" parameterType="int" resultType="customerVisit">
+        select * from customervisit where id=#{id}
+    </select>
+    <update id="update" parameterType="customerVisit" >
+        update customervisit
+        <set >
+            <if test="cusId != null" >
+                cusId = #{cusId,jdbcType=INTEGER},
+            </if>
+            <if test="empId != null" >
+                empId = #{empId,jdbcType=INTEGER},
+            </if>
+            <if test="content != null" >
+                content = #{content,jdbcType=VARCHAR},
+            </if>
+            <if test="date != null" >
+                date = #{date,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+</mapper>

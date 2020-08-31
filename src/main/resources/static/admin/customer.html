@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>员工管理</title>
+	<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+	<link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">
+<!--	<link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.css" rel="stylesheet">-->
+	<link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+	<link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">
+	<link rel="stylesheet" href="../css/style.css">
+	<link rel="icon" href="../img/GiGi.png">
+
+	<script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+	<script src="../plugins/jqPaginator.min.js" type="text/javascript"></script>
+	<!--下拉框-->
+	<link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap-select.min.css">
+	<script src="../plugins/bootstrap/js/bootstrap-select.min.js"></script>
+
+	<script type="text/javascript">
+		var cmd = "customer";
+		$(function () {
+			showCustomerList(1,true);
+		})
+		
+		function addCustomer() {
+			var customer = {empId:$("#eId").val(),cusName:$("#cusName").val(),address:$("#address").val(),contact:$("#contact").val(),tel:$("#tel").val(),email:$("#email").val(),empId:$("#eId").val()};
+			console.log(customer);
+			$.post("customer/save",customer,function (result) {
+			},"json");
+
+			showCustomerList(1,true);
+			alert("添加成功。");
+		}
+		
+		function updateCustomer() {
+			var customer = {cusId:$("#cusId2").val(),cusName:$("#cusName2").val(),address:$("#address2").val(),contact:$("#contact2").val(),tel:$("#tel2").val(),email:$("#email2").val(),empId:$("#eId2").val()};
+			console.log(customer);
+			$.post("customer/updateMyCus",customer,function (result) {
+				if (result){
+					alert("修改成功！");
+					showCustomerList(1,true);
+				}else {
+					alert("这不是你的客户，无法修改")
+				}
+				},"json");
+
+		}
+
+		function showUpdateCustomer(cusId) {
+				var cusId = {cusId:cusId};
+				$.get("customer/showUpdateCustomer",cusId,function (result) {
+					$("#cusId2").val(cusId.cusId);$("#cusName2").val(result.customer.cusName);$("#address2").val(result.customer.address);$("#contact2").val(result.customer.contact);$("#tel2").val(result.customer.tel);$("#email2").val(result.customer.email);$("#eId2").val(result.customer.empId);
+				},"json");
+		}
+		
+		function deleteCustomer(cusId,empId) {
+			if (window.confirm("确定要删除吗？")){
+				var customer ={cusId:cusId,empId:empId}
+				$.get("customer/deleteMyCus",customer,function (result) {
+					if (result){
+						alert("删除成功！");
+						showCustomerList(1,true);
+					}else {
+						alert("这不是你的客户，无法删除")
+					}
+				},"json");
+			}
+		}
+		//共享一个客户
+
+		function addShare() {
+			var customerShare = {cusId:$("#cusId3").val() ,empId:$("#select3 option:selected").val()};
+			$.post("customerShare/shareCus",customerShare,function (result) {
+				console.log("result"+result);
+				if (result){
+					alert("共享成功！");
+					showCustomerList(1,true);
+				}else {
+					alert("这不是你的客户，你没有权限与其它人共享")
+				}
+			},"json")
+		}
+
+		//转移一个客户
+		function transCus() {
+			var customer = {cusId:$("#cusId4").val() ,empId:$("#select4 option:selected").val()};
+			$.post("customer/transCus",customer,function (result) {
+				if (result){
+					alert("转移成功！");
+					showCustomerList(1,true);
+				}else {
+					alert("这不是你的客户，你没有权限进行转移")
+				}
+			},"json")
+		}
+		//当点击新增时，显示模态框初始数据
+		function addCusData() {
+			$.post("customer/queryMyself",{},function (result) {
+				console.log("result.eId"+result.eId);
+				$("#eId").val(result.eId);
+			},"json")
+		}
+
+		//当点击共享时，显示模态框初始数据
+		function showShare(cusId) {
+			shareSelectData();
+			$("#cusId3").val(cusId);
+		}
+
+		//当点击共享时时，select选择框的数据的更新
+		function shareSelectData() {
+			$.post("employee/queryAll",{},function (result) {
+				$("#select3").html("");
+				for (var i=1;i<=result.list.length;i++){
+					//当登录员工与被分享员工id相等时，不将该项加入select.
+					if (result.employee.empId == result.list[i-1].empId){
+						continue;
+					}
+					$("#select3").append("<option value="+result.list[i-1].empId+">"+result.list[i-1].empName+"</option>")
+					$('#select3').selectpicker('refresh');
+					$('#select3').selectpicker('render');
+				}
+			},"json")
+		}
+
+		//当点击转移时，显示模态框初始数据
+		function showTrans(cusId) {
+			transSelectData();
+			$("#cusId4").val(cusId);
+		}
+
+		//当点击转移时，select选择框的数据的更新
+		function transSelectData() {
+			$.post("employee/queryAll",{},function (result) {
+				$("#select4").html("");
+				for (var i=1;i<=result.list.length;i++){
+					//当登录员工与被分享员工id相等时，不将该项加入select.
+					if (result.employee.empId == result.list[i-1].empId){
+						continue;
+					}
+					$("#select4").append("<option value="+result.list[i-1].empId+">"+result.list[i-1].empName+"</option>")
+					$('#select4').selectpicker('refresh');
+					$('#select4').selectpicker('render');
+				}
+			},"json")
+		}
+
+		var page = {pageNum:1,size:4,rowCount:0,pageCount:0};
+		function showCustomerList(pageNum,isFirst) {
+			page.pageNum=pageNum;
+			$.get("customer/findAll",page,function (result) {
+				// page.pageNum=pageNum;
+				var customerList = result.customerList;
+				page.rowCount = result.rowCount;
+				page.pageCount = result.pageCount
+				$("#showCustomerList").html("");
+				$.each(customerList,function (i,e) {
+					$("#showCustomerList").append("<tr> <td>"+e.cusId+"</td> <td>"+e.empId+"</td> <td>"+e.cusName+"</td> <td>"+e.address+
+							"</td> <td>"+e.contact+"</td> <td>"+e.tel+"</td> <td>"+e.email+"</td> <td class='text-center'>"+
+							"<button type='button' class='btn bg-olive btn-xs' data-toggle='modal' data-target='#editModal' onclick='showUpdateCustomer(" +e.cusId+ ")' >修改</button>"+
+							"<button type='button' class='btn bg-olive btn-xs' onclick='deleteCustomer(" +e.cusId+ ","+e.empId+")' > 删除</button>"+
+							"<button type='button' class='btn bg-olive btn-xs' data-toggle='modal' data-target='#shareModal' onclick='showShare(" +e.cusId+ ")' > 共享</button>"+
+							"<button type='button' class='btn bg-olive btn-xs' data-toggle='modal' data-target='#transModal' onclick='showTrans(" +e.cusId+ ")' > 转移</button>"+ "</td> </tr>");
+				})
+				//第一次显示分页插件，后面只需要更新数据
+				if(isFirst)
+				{
+					$("#page").jqPaginator({
+						pageSize:4,//每一页多少条记录
+						totalCounts:page.rowCount,
+						visiblePages: 10,
+						currentPage: page.pageNum,
+
+
+						first: '<li class="first"><a href="javascript:void(0);">首页</a></li>',
+						prev: '<li class="prev"><a href="javascript:void(0);">上一页</a></li>',
+						next: '<li class="next"><a href="javascript:void(0);">下一页</a></li>',
+						last: '<li class="last"><a href="javascript:void(0);">尾页</a></li>',
+						page: '<li class="page"><a href="javascript:void(0);">{{page}}</a></li>',
+						onPageChange: function (pageNo) {
+							console.log(pageNo);
+							//更新数据
+							showCustomerList(pageNo,false);
+						}
+					});
+				}
+			},"json")
+		}
+	</script>
+
+
+</head>
+<body class="hold-transition skin-red sidebar-mini">
+  <!-- .box-body -->
+  <div class="box-header with-border">
+	  <h3 class="box-title">客户管理</h3>
+  </div>
+  <div class="box-body">
+
+	  <!-- 数据表格 -->
+	  <div class="table-box">
+
+		  <!--工具栏-->
+		  <div class="pull-left">
+			  <div class="form-group form-inline">
+				  <div class="btn-group">
+					  <button type="button" class="btn btn-default" title="新建" data-toggle="modal" data-target="#addModal" onclick=addCusData() ><i class="fa fa-file-o"></i> 新建</button>
+				  </div>
+			  </div>
+		  </div>
+		  <div class="box-tools pull-right">
+			  <div class="has-feedback">
+			  </div>
+		  </div>
+		  <!--工具栏/-->
+
+		  <!--数据列表-->
+		  <table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+			  <thead>
+			  <tr>
+
+				  <th class="sorting_asc">客户ID</th>
+				  <th class="sorting">所属员工id</th>
+				  <th class="sorting">客户名称</th>
+				  <th class="sorting">客户地址</th>
+				  <th class="sorting">客户联系方式</th>
+				  <th class="sorting">客户电话</th>
+				  <th class="sorting">客户邮箱</th>
+				  <th class="text-center">操作</th>
+			  </tr>
+			  </thead>
+			  <tbody id="showCustomerList">
+			  </tbody>
+		  </table>
+		  <!--数据列表/-->
+	  </div>
+	  <!-- 数据表格 /-->
+  </div>
+  <!-- /.box-body -->
+         
+<!-- 新增窗口 -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-action="admin/customer/save">
+  <div class="modal-dialog" >
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			<h3 id="myAddModalLabel">新增客户</h3>
+		</div>
+		<div class="modal-body">		
+			<table class="table table-bordered table-striped"  width="800px" >
+		      	<tr>
+		      		<td>客户名称</td>
+		      		<td><input id="cusName" class="form-control" placeholder="客户名称" >  </td>
+		      	</tr>
+		      	<tr>
+		      		<td>客户地址</td>
+		      		<td><input id="address" class="form-control" placeholder="客户地址">  </td>
+		      	</tr>
+				<tr>
+					<td>其它联系方式</td>
+					<td><input id="contact" class="form-control" placeholder="其它联系方式">  </td>
+				</tr>
+				<tr>
+					<td>电话号码</td>
+					<td><input id="tel" class="form-control" placeholder="电话号码">  </td>
+				</tr>
+				<tr>
+					<td>邮箱</td>
+					<td><input id="email" class="form-control" placeholder="邮箱">  </td>
+				</tr>
+				<tr>
+					<td>所属雇员id</td>
+					<td><input id="eId" class="form-control" placeholder="所属雇员id" readonly="readonly">  </td>
+				</tr>
+			 </table>				
+		</div>
+		<div class="modal-footer">						
+			<button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="addCustomer()">保存</button>
+			<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+		</div>
+	  </div>
+	</div>
+</div>
+  <!-- 编辑窗口 -->
+  <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	  <div class="modal-dialog" >
+		  <div class="modal-content">
+			  <div class="modal-header">
+				  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				  <h3 id="myEditModalLabel">客户信息编辑</h3>
+			  </div>
+			  <div class="modal-body">
+				  <table class="table table-bordered table-striped"  width="800px">
+					  <tr>
+						  <td>客户id</td>
+						  <td><input id="cusId2" class="form-control" placeholder="客户id" readonly="readonly">  </td>
+					  </tr>
+					  <tr>
+						  <td>客户名称</td>
+						  <td><input id="cusName2" class="form-control" placeholder="客户名称" >  </td>
+					  </tr>
+					  <tr>
+						  <td>客户地址</td>
+						  <td><input id="address2" class="form-control" placeholder="客户地址">  </td>
+					  </tr>
+					  <tr>
+						  <td>其它联系方式</td>
+						  <td><input id="contact2" class="form-control" placeholder="其它联系方式">  </td>
+					  </tr>
+					  <tr>
+						  <td>电话号码</td>
+						  <td><input id="tel2" class="form-control" placeholder="电话号码">  </td>
+					  </tr>
+					  <tr>
+						  <td>邮箱</td>
+						  <td><input id="email2" class="form-control" placeholder="邮箱">  </td>
+					  </tr>
+					  <tr>
+						  <td>所属雇员id</td>
+						  <td><input id="eId2" class="form-control" placeholder="所属雇员id">  </td>
+					  </tr>
+				  </table>
+			  </div>
+			  <div class="modal-footer">
+				  <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="updateCustomer()" >保存</button>
+				  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+			  </div>
+		  </div>
+	  </div>
+  </div>
+  <!-- 共享窗口 -->
+  <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-action="admin/customer/save">
+	  <div class="modal-dialog" >
+		  <div class="modal-content">
+			  <div class="modal-header">
+				  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				  <h3 id="myShareModalLabel">共享客户</h3>
+			  </div>
+			  <div class="modal-body">
+				  <table class="table table-bordered table-striped"  width="800px" >
+					  <tr>
+						  <td>客户id</td>
+						  <td><input id="cusId3" class="form-control" placeholder="客户id" readonly="readonly">  </td>
+					  </tr>
+					  <tr>
+						  <td>共享给：</td>
+						  <td>
+							  <select id="select3" class="selectpicker" >
+							  </select>
+						  </td>
+					  </tr>
+				  </table>
+			  </div>
+			  <div class="modal-footer">
+				  <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="addShare()">保存</button>
+				  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+			  </div>
+		  </div>
+	  </div>
+  </div>
+  <!-- 转移窗口 -->
+  <div class="modal fade" id="transModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-action="admin/customer/save">
+	  <div class="modal-dialog" >
+		  <div class="modal-content">
+			  <div class="modal-header">
+				  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				  <h3 id="myTransModalLabel">转移客户</h3>
+			  </div>
+			  <div class="modal-body">
+				  <table class="table table-bordered table-striped"  width="800px" >
+					  <tr>
+						  <td>客户id</td>
+						  <td><input id="cusId4" class="form-control" placeholder="客户id" readonly="readonly">  </td>
+					  </tr>
+					  <tr>
+						  <td>转移给：</td>
+						  <td>
+							  <select id="select4" class="selectpicker" >
+							  </select>
+						  </td>
+					  </tr>
+				  </table>
+			  </div>
+			  <div class="modal-footer">
+				  <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="transCus()">保存</button>
+				  <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+			  </div>
+		  </div>
+	  </div>
+  </div>
+  <ul class="pagination" id="page"></ul>
+
+</body>
+</html>

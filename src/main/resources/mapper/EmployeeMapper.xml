@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dao.EmployeeDao" >
+
+    <select id="selectByUserName" resultType="employee" parameterType="java.lang.String" >
+        select * from employees where username = #{userName}
+    </select>
+
+    <select id="getByUserName" parameterType="string" resultType="employee">
+        select e.*,r.roleInfo from employees e,role r  where 1=1  and e.roleId=r.roleId  and  userName=#{userName}
+    </select>
+
+    <select id="findAll" resultType="employee">
+        select * from employees
+    </select>
+    <insert id="insert" parameterType="employee">
+        insert into employees(userName,userPassword,tel,empName,email,roleId) values(#{userName},#{userPassword},#{tel},#{empName},#{email},#{roleId})
+    </insert>
+    <delete id="delete" parameterType="int">
+        delete from employees where empId=#{empId}
+    </delete>
+    <select id="findById" parameterType="int" resultType="employee">
+        select * from employees where empId=#{empId}
+    </select>
+
+    <update id="update" parameterType="employee" >
+        update employees
+        <set >
+            <if test="userName != null" >
+                userName = #{userName,jdbcType=VARCHAR},
+            </if>
+            <if test="userPassword != null" >
+                userPassword = #{userPassword,jdbcType=VARCHAR},
+            </if>
+            <if test="tel != null" >
+                tel = #{tel,jdbcType=VARCHAR},
+            </if>
+            <if test="empName != null" >
+                empName = #{empName,jdbcType=VARCHAR},
+            </if>
+            <if test="email != null" >
+                email = #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="roleId != null">
+                roleId = #{roleId,jdbcType=INTEGER}
+            </if>
+            <if test="roleInfo != null">
+                roleInfo = #{roleInfo,jdbcType=VARCHAR}
+            </if>
+        </set>
+        where empId = #{empId,jdbcType=INTEGER}
+    </update>
+
+</mapper>
